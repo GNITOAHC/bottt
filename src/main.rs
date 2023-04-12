@@ -1,6 +1,8 @@
 use anyhow::anyhow;
-// use chatgpt::types::CompletionResponse;
+use chatgpt::prelude::ChatGPT;
+use chatgpt::types::CompletionResponse;
 use serenity::async_trait;
+use std::env;
 // use serenity::builder::CreateApplicationCommandOption;
 use serenity::model::application::command::Command;
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
@@ -24,7 +26,9 @@ use serenity::model::channel::ReactionType;
 
 mod commands;
 
-struct Bot;
+struct Bot {
+    gpt_client: ChatGPT,
+}
 
 static mut GPT_START: bool = false;
 
@@ -65,15 +69,25 @@ impl EventHandler for Bot {
             }
         }
         unsafe {
-            if GPT_START == true && msg.content != "!gptstop" {
+            if GPT_START == true && msg.content != "!gptstart" && msg.content != "!gptstop" {
                 if let Err(e) = msg.channel_id.say(&ctx.http, "GPT-3 waiting!").await {
                     error!("Error sending message: {:?}", e);
                 }
-                // let a = new_chat("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".to_string(), msg.content).await;
-                // if let Err(e) = msg.channel_id.say(&ctx.http, a.as_str()).await {
-                //     error!("Error sending message: {:?}", e);
-                // }
-                // return;
+                if let Err(e) = self.gpt_client.send_message(msg.content.clone()).await {
+                    error!("Error sending message: {:?}", e);
+                }
+                let response: CompletionResponse = self
+                    .gpt_client
+                    .send_message(msg.content.clone())
+                    .await
+                    .unwrap();
+                if let Err(e) = msg
+                    .channel_id
+                    .say(&ctx.http, response.message().content.clone())
+                    .await
+                {
+                    error!("Error sending message: {:?}", e);
+                }
             }
         }
         if msg.content == "!hello" {
@@ -172,20 +186,13 @@ impl EventHandler for Bot {
     }
 }
 
-// async fn new_chat(openai_key: String, message: String) -> String {
-//     let client = ChatGPT::new(openai_key).unwrap();
-//     let response: CompletionResponse = client
-//         .send_message(message)
-//         .await
-//         .unwrap();
-//     let r = response.message().content.clone();
-//     r
-// }
-
-// async fn new_chat(openai_key: String) -> ChatGPT {
-//     let client = ChatGPT::new(openai_key).unwrap();
-//     client
-// }
+async fn new_chat(openai_key: String) -> ChatGPT {
+    if let Err(e) = ChatGPT::new(openai_key.clone()) {
+        error!("Error getting openai client: {}", e);
+    }
+    let client = ChatGPT::new(openai_key).unwrap();
+    client
+}
 
 #[shuttle_runtime::main]
 async fn serenity(
@@ -198,11 +205,13 @@ async fn serenity(
         return Err(anyhow!("'DISCORD_TOKEN' was not found").into());
     };
 
-    // let openai_key = if let Some(key) = secret_store.get("OPENAI_KEY") {
-    //     key
-    // } else {
-    //     return Err(anyhow!("'OPENAI_KEY' was not found").into());
-    // };
+    let openai_key = if let Some(key) = secret_store.get("OPENAI_KEY") {
+        key
+    } else {
+        return Err(anyhow!("'OPENAI_KEY' was not found").into());
+    };
+
+    let chat_gpt = new_chat(openai_key).await;
 
     // static GPT_START: bool = false;
 
