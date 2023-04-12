@@ -12,8 +12,8 @@ use tracing::{error, info};
 
 // use serenity::model::prelude::command::CommandOptionType;
 
-use std::path::Path;
-// use url::Url;
+// use std::path::Path;
+use url::Url;
 
 // use chatgpt::prelude::*;
 
@@ -81,7 +81,6 @@ impl EventHandler for Bot {
                 error!("Error sending message: {:?}", e);
             }
             return;
-            // msg.pin(&ctx).await.unwrap(); // Pin this content
         }
         if msg.content == "!react" {
             Self::react_space_invader(&self, ctx, msg).await;
@@ -116,14 +115,20 @@ impl EventHandler for Bot {
                 "jpg" => {
                     let a = commands::jpg::run(&command.data.options);
                     let string_slice = a.as_str();
-                    let path = Path::new(string_slice);
-                    let file_path = AttachmentType::Path(path); // Path start looking from the directory where `Cargo.toml` is located.
+                    // let path = Path::new(string_slice);
+                    // let file_path = AttachmentType::Path(path); // Path start looking from the directory where `Cargo.toml` is located.
+                    if let Err(e) = Url::parse(string_slice) {
+                        error!("Error sending message: {:?}", e);
+                    }
+                    let url = Url::parse(string_slice).unwrap();
+                    let file_url = AttachmentType::Image(url);
                     if let Err(why) = command
                         .create_interaction_response(&ctx.http, |response| {
                             response
                                 .kind(InteractionResponseType::ChannelMessageWithSource)
                                 // .interaction_response_data(|message| message.content(a).add_file(file_path))
-                                .interaction_response_data(|message| message.add_file(file_path))
+                                // .interaction_response_data(|message| message.add_file(file_path))
+                                .interaction_response_data(|message| message.add_file(file_url))
                         })
                         .await
                     {
