@@ -36,7 +36,7 @@ pub fn run(options: &[CommandDataOption]) -> String {
             return option_value_to_string(&option.value);
         } else {
             println!("nono jpg");
-            return "./assets/images/jpg.jpg".to_string();
+            return "https://github.com/GNITOAHC/bottt/blob/main/assets/images/jpg.jpg?raw=true".to_string();
         }
     }
     // let number = options.get(1).expect("Missing number option").resolved;
@@ -50,12 +50,13 @@ pub fn run(options: &[CommandDataOption]) -> String {
     //     println!("The input value is not an integer");
     //     return "The input value is not an integer".to_string();
     // }
-    return "./assets/images/jpg.jpg".to_string();
+    return "https://github.com/GNITOAHC/bottt/blob/main/assets/images/jpg.jpg?raw=true".to_string();
 }
 
 fn bear_string(s: &str) -> String {
-    let location = "./assets/images/";
-    let together = format!("{}{}", location, s);
+    let location = "https://github.com/GNITOAHC/bottt/blob/main/assets/images/";
+    let raw = "?raw=true";
+    let together = format!("{}{}{}", location, s, raw);
     together
 }
 
@@ -83,6 +84,6 @@ pub fn register(
                 .name("近平")
                 .description("subcommand group")
                 .kind(CommandOptionType::String)
-                .add_string_choice("近平不喜歡你這樣", "./assets/images/jinping_dont_like_this.jpg")
+                .add_string_choice("近平不喜歡你這樣", "https://github.com/GNITOAHC/bottt/blob/main/assets/images/jinping_dont_like_this.jpg?raw=true")
         })
 }
