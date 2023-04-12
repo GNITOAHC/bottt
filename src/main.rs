@@ -220,10 +220,43 @@ async fn serenity(
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT;
 
+    let bot = Bot {
+        gpt_client: chat_gpt,
+    };
+
     let client = Client::builder(&token, intents)
-        .event_handler(Bot)
+        .event_handler(bot)
         .await
         .expect("Err creating client");
 
     Ok(client.into())
 }
+
+// #[tokio::main]
+// async fn main() {
+//     // Get the discord token set in `Secrets.toml`
+//     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+//     let openai_key = env::var("OPENAI_KEY").expect("Expected a key in the environment");
+//
+//     let chat_gpt = new_chat(openai_key).await;
+//
+//     // static GPT_START: bool = false;
+//
+//     // Set gateway intents, which decides what events the bot will be notified about
+//     let intents = GatewayIntents::GUILD_MESSAGES
+//         | GatewayIntents::DIRECT_MESSAGES
+//         | GatewayIntents::MESSAGE_CONTENT;
+//
+//     let bot = Bot {
+//         gpt_client: chat_gpt,
+//     };
+//
+//     let mut client = Client::builder(&token, intents)
+//         .event_handler(bot)
+//         .await
+//         .expect("Err creating client");
+//
+//     if let Err(why) = client.start().await {
+//             println!("Client error: {:?}", why);
+//     }
+// }
