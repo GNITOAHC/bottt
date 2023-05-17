@@ -1,87 +1,89 @@
-use anyhow::anyhow;
-use chatgpt::prelude::ChatGPT;
-use serenity::prelude::*;
+use anyhow::Context as _;
+use poise::serenity_prelude as serenity;
+use shuttle_poise::ShuttlePoise;
 use shuttle_secrets::SecretStore;
-use tracing::error;
+use songbird::*;
+use std::path::PathBuf;
+use std::time::Duration;
 
-// Use when using tokio::main testing.
-// use std::env;
+pub struct Data {
+    pub assets: PathBuf,
+} // User data, which is stored and accessible in all command invocations
+pub type Error = Box<dyn std::error::Error + Send + Sync>;
+pub type Context<'a> = poise::Context<'a, Data, Error>;
 
-mod bot;
 mod commands;
-use bot::Bot;
 
-async fn new_chat(openai_key: String) -> ChatGPT {
-    if let Err(e) = ChatGPT::new(openai_key.clone()) {
-        error!("Error getting openai client: {}", e);
+async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
+    // This is our custom error handler
+    // They are many errors that can occur, so we only handle the ones we want to customize
+    // and forward the rest to the default handler
+    match error {
+        poise::FrameworkError::Setup { error, .. } => panic!("Failed to start bot: {:?}", error),
+        poise::FrameworkError::Command { error, ctx } => {
+            println!("Error in command `{}`: {:?}", ctx.command().name, error,);
+        }
+        error => {
+            if let Err(e) = poise::builtins::on_error(error).await {
+                println!("Error while handling error: {}", e)
+            }
+        }
     }
-    let client = ChatGPT::new(openai_key).unwrap();
-    client
 }
 
 #[shuttle_runtime::main]
-async fn serenity(
+async fn poise(
     #[shuttle_secrets::Secrets] secret_store: SecretStore,
-) -> shuttle_serenity::ShuttleSerenity {
+    #[shuttle_static_folder::StaticFolder(folder = "assets")] assets: PathBuf,
+) -> ShuttlePoise<Data, Error> {
     // Get the discord token set in `Secrets.toml`
-    let token = if let Some(token) = secret_store.get("DISCORD_TOKEN") {
-        token
-    } else {
-        return Err(anyhow!("'DISCORD_TOKEN' was not found").into());
+    let discord_token = secret_store
+        .get("DISCORD_TOKEN")
+        .context("'DISCORD_TOKEN' was not found")?;
+
+    let commands = vec![commands::vote(), commands::what()];
+
+    let options = poise::FrameworkOptions {
+        commands,
+        prefix_options: poise::PrefixFrameworkOptions {
+            prefix: Some("b!".into()),
+            edit_tracker: Some(poise::EditTracker::for_timespan(Duration::from_secs(3600))),
+            ..Default::default()
+        },
+        on_error: |error| Box::pin(on_error(error)),
+        pre_command: |ctx| {
+            Box::pin(async move {
+                println!("Executing command {}...", ctx.command().qualified_name);
+            })
+        },
+        post_command: |ctx| {
+            Box::pin(async move {
+                println!("Executed command {}!", ctx.command().qualified_name);
+            })
+        },
+        event_handler: |_ctx, event, _framework, _data| {
+            Box::pin(async move {
+                println!("Got an event in event handler: {:?}", event.name());
+                Ok(())
+            })
+        },
+        ..Default::default()
     };
 
-    let openai_key = if let Some(key) = secret_store.get("OPENAI_KEY") {
-        key
-    } else {
-        return Err(anyhow!("'OPENAI_KEY' was not found").into());
-    };
-
-    let chat_gpt = new_chat(openai_key).await;
-
-    // static GPT_START: bool = false;
-
-    // Set gateway intents, which decides what events the bot will be notified about
-    let intents = GatewayIntents::GUILD_MESSAGES
-        | GatewayIntents::DIRECT_MESSAGES
-        | GatewayIntents::MESSAGE_CONTENT;
-
-    let bot = Bot {
-        gpt_client: chat_gpt,
-    };
-
-    let client = Client::builder(&token, intents)
-        .event_handler(bot)
+    let framework = poise::Framework::builder()
+        .options(options)
+        .token(discord_token)
+        .intents(serenity::GatewayIntents::non_privileged())
+        .setup(|ctx, _ready, framework| {
+            Box::pin(async move {
+                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                Ok(Data { assets })
+            })
+        })
+        .client_settings(|c| c.register_songbird())
+        .build()
         .await
-        .expect("Err creating client");
+        .map_err(shuttle_runtime::CustomError::new)?;
 
-    Ok(client.into())
+    Ok(framework.into())
 }
-
-// #[tokio::main]
-// async fn main() {
-//     // Get the discord token set in `Secrets.toml`
-//     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
-//     let openai_key = env::var("OPENAI_KEY").expect("Expected a key in the environment");
-//
-//     let chat_gpt = new_chat(openai_key).await;
-//
-//     // static GPT_START: bool = false;
-//
-//     // Set gateway intents, which decides what events the bot will be notified about
-//     let intents = GatewayIntents::GUILD_MESSAGES
-//         | GatewayIntents::DIRECT_MESSAGES
-//         | GatewayIntents::MESSAGE_CONTENT;
-//
-//     let bot = Bot {
-//         gpt_client: chat_gpt,
-//     };
-//
-//     let mut client = Client::builder(&token, intents)
-//         .event_handler(bot)
-//         .await
-//         .expect("Err creating client");
-//
-//     if let Err(why) = client.start().await {
-//             println!("Client error: {:?}", why);
-//     }
-// }
