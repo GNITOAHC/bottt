@@ -7,8 +7,9 @@ fn main() {
         if !std::process::Command::new("apt")
             .arg("install")
             .arg("-y")
-            .arg("libopus-dev") // the apt package the project needs
             .arg("cmake")
+            .arg("youtube-dl")
+            .arg("ffmpeg")
             // can add more here
             .status()
             .expect("failed to run apt")
