@@ -13,6 +13,7 @@ pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
 
 mod commands;
+mod voice_command;
 
 async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
     // This is our custom error handler
@@ -41,7 +42,16 @@ async fn poise(
         .get("DISCORD_TOKEN")
         .context("'DISCORD_TOKEN' was not found")?;
 
-    let commands = vec![commands::vote(), commands::what()];
+    let commands = vec![
+        commands::vote(),
+        commands::what(),
+        voice_command::play(),
+        voice_command::leave(),
+        voice_command::pause(),
+        voice_command::resume(),
+        voice_command::stop(),
+        voice_command::skip(),
+    ];
 
     let options = poise::FrameworkOptions {
         commands,
