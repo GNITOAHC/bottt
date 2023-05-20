@@ -259,7 +259,6 @@ dependencies = [
  "songbird",
  "tokio",
  "tracing",
- "url",
 ]
 
 [[package]]
