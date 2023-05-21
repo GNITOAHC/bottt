@@ -51,6 +51,7 @@ async fn poise(
         voice_command::resume(),
         voice_command::stop(),
         voice_command::skip(),
+        voice_command::speak()
     ];
 
     let options = poise::FrameworkOptions {
@@ -83,7 +84,7 @@ async fn poise(
     let framework = poise::Framework::builder()
         .options(options)
         .token(discord_token)
-        .intents(serenity::GatewayIntents::non_privileged())
+        .intents(serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT)
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
