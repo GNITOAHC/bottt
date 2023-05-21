@@ -6,11 +6,11 @@ async fn language_autocomplete<'a>(
     _ctx: Context<'_>,
     _partial: &'a str,
 ) -> impl Iterator<Item = poise::AutocompleteChoice<&'a str>> {
-    ["en", "jp"]
+    [("english", "en"), ("japanese", "ja")]
         .iter()
         .map(|&s| poise::AutocompleteChoice {
-            name: s.to_string(),
-            value: s,
+            name: s.0.to_string(),
+            value: s.1,
         })
 }
 
