@@ -1,4 +1,4 @@
-use crate::voice_command::{leave_handle, vc_handle};
+use crate::voice_command::vc_handle;
 use crate::{Context, Error};
 use songbird::ytdl;
 
@@ -27,28 +27,6 @@ pub async fn play(ctx: Context<'_>, #[description = "url"] url: String) -> Resul
                 return Ok(());
             }
         }
-    })
-    .await
-}
-
-#[poise::command(slash_command)]
-pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
-    // return leave_handle(ctx).await;
-    leave_handle(ctx, |manager, c| async move {
-        let guild_id = c.guild_id().unwrap();
-        let has_handler = manager.get(guild_id).is_some();
-
-        if has_handler {
-            if let Err(e) = manager.remove(guild_id).await {
-                c.say(format!("Failed: {e:?}")).await?;
-            } else {
-                c.say("Left voice channel").await?;
-            }
-        } else {
-            c.say("Not in a voice channel").await?;
-        }
-
-        Ok(())
     })
     .await
 }

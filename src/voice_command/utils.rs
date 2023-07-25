@@ -92,28 +92,35 @@ pub async fn leave_handle<
     f(manager, ctx).await
 }
 
-// pub async fn _leave_handle(ctx: Context<'_>) -> Result<(), Error> {
-//     ctx.defer().await?;
-//     let guild_id = ctx.guild_id().unwrap();
-//     let manager = songbird::get(ctx.serenity_context())
-//         .await
-//         .expect("Could not retrieve Songbird voice client")
-//         .clone();
-//     let has_handler = manager.get(guild_id).is_some();
-//
-//     if has_handler {
-//         // TODO replace with let chains
-//         if let Err(e) = manager.remove(guild_id).await {
-//             ctx.say(format!("Failed: {e:?}")).await?;
-//             // return Ok(format!("Failed: {e:?}"));
-//         } else {
-//             ctx.say("Left voice channel").await?;
-//             // return Ok("Left voice channel".to_string());
-//         }
-//     } else {
-//         ctx.say("Not in a voice channel").await?;
-//         // return Ok("Not in a voice channel".to_string());
-//     }
-//
-//     Ok(())
-// }
+#[poise::command(slash_command, prefix_command)]
+pub async fn join(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.defer().await?;
+    // vc_handle(ctx, autojoin: bool, f: impl FnOnce(Arc<Mutex<Call>>, Context<'_>) -> Fut) -> Fut
+    vc_handle(ctx, true, |_, ctx| async move {
+        ctx.say("Joined voice channel").await?;
+        Ok(())
+    })
+    .await
+}
+
+#[poise::command(slash_command, prefix_command)]
+pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.defer().await?;
+    leave_handle(ctx, |manager, c| async move {
+        let guild_id = c.guild_id().unwrap();
+        let has_handler = manager.get(guild_id).is_some();
+
+        if has_handler {
+            if let Err(e) = manager.remove(guild_id).await {
+                c.say(format!("Failed: {e:?}")).await?;
+            } else {
+                c.say("Left voice channel").await?;
+            }
+        } else {
+            c.say("Not in a voice channel").await?;
+        }
+
+        Ok(())
+    })
+    .await
+}

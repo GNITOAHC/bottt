@@ -42,17 +42,9 @@ async fn poise(
         .get("DISCORD_TOKEN")
         .context("'DISCORD_TOKEN' was not found")?;
 
-    let commands = vec![
-        commands::vote(),
-        commands::what(),
-        voice_command::play(),
-        voice_command::leave(),
-        voice_command::pause(),
-        voice_command::resume(),
-        voice_command::stop(),
-        voice_command::skip(),
-        voice_command::speak()
-    ];
+    let mut voice_commands = voice_command::get_voice_commands();
+    let mut commands = vec![commands::vote(), commands::what()];
+    commands.append(&mut voice_commands);
 
     let options = poise::FrameworkOptions {
         commands,
@@ -84,7 +76,9 @@ async fn poise(
     let framework = poise::Framework::builder()
         .options(options)
         .token(discord_token)
-        .intents(serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT)
+        .intents(
+            serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT,
+        )
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
