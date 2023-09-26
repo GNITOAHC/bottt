@@ -35,7 +35,7 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
 #[shuttle_runtime::main]
 async fn poise(
     #[shuttle_secrets::Secrets] secret_store: SecretStore,
-    #[shuttle_static_folder::StaticFolder(folder = "assets")] assets: PathBuf,
+    // #[shuttle_static_folder::StaticFolder(folder = "assets")] assets: PathBuf,
 ) -> ShuttlePoise<Data, Error> {
     // Get the discord token set in `Secrets.toml`
     let discord_token = secret_store
@@ -73,6 +73,7 @@ async fn poise(
         ..Default::default()
     };
 
+    let assets: PathBuf = PathBuf::from("./assets");
     let framework = poise::Framework::builder()
         .options(options)
         .token(discord_token)
