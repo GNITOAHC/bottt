@@ -1,6 +1,5 @@
 use crate::{Context, Error};
 use poise::serenity_prelude::ReactionType;
-use serenity::http::CacheHttp;
 
 #[poise::command(slash_command)]
 pub async fn vote(
