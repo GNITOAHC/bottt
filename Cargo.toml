@@ -7,11 +7,11 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-shuttle-runtime = { version = "0.27.0", default-features = false }
+shuttle-runtime = { version = "0.28.0", default-features = false }
 anyhow = "1.0.75"
 poise = "0.5.6"
-shuttle-poise = "0.27.0"
-shuttle-secrets = "0.27.0"
+shuttle-poise = "0.28.0"
+shuttle-secrets = "0.28.0"
 tokio = "1.32.0"
 tracing = "0.1.37"
 songbird = { version = "0.3.2", features = ["yt-dlp", "builtin-queue", "driver"] }
