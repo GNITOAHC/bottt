@@ -12,8 +12,8 @@ anyhow = "1.0.75"
 poise = "0.5.6"
 shuttle-poise = "0.28.0"
 shuttle-secrets = "0.28.0"
-tokio = "1.32.0"
-tracing = "0.1.37"
+tokio = "1.34.0"
+tracing = "0.1.40"
 songbird = { version = "0.3.2", features = ["yt-dlp", "builtin-queue", "driver"] }
 chrono = "0.4.31"
 serenity = { version = "0.11.6", default-features = false }
